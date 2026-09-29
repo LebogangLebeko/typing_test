@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 2: Mathematics Assessment - {{ book }}</title>
+    <style>
+        :root { --primary: #1A365D; --accent: #D4A017; --bg: #F8F9FA; --text: #2D3748; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .logo { display: block; margin: 0 auto 20px auto; max-width: 180px; }
+        .container { max-width: 750px; margin: 20px auto; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); padding: 30px; border-top: 5px solid var(--accent); }
+        .header { border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; margin-bottom: 25px; }
+        .header h2 { color: var(--primary); margin: 0 0 5px 0; }
+        .question-card { background: #F7FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 20px; margin-bottom: 20px; }
+        .question-title { font-weight: 600; font-size: 1.05rem; margin-bottom: 12px; color: var(--primary); }
+        .options-list { list-style: none; padding: 0; margin: 0; }
+        .option-item { margin-bottom: 10px; }
+        .option-item label { display: flex; align-items: center; background: #ffffff; border: 1px solid #CBD5E0; padding: 10px 15px; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
+        .option-item label:hover { border-color: var(--primary); background: #EDF2F7; }
+        .option-item input[type="radio"] { margin-right: 12px; accent-color: var(--primary); }
+        .submit-btn { background-color: var(--primary); color: white; border: none; padding: 12px 24px; font-size: 1rem; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px; }
+        .submit-btn:hover { background-color: #0F2545; }
+    </style>
+</head>
+<body>
+
+    <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Company Logo">
+
+<div class="container">
+    <div class="header">
+        <h2>Part 2: Mathematics Assessment ({{ book }} Portfolio)</h2>
+        <p>Review the portfolio scenario questions below and select the correct calculated response.</p>
+    </div>
+
+    <form id="mathForm">
+        {% for q in questions %}
+        <div class="question-card">
+            <div class="question-title">Question {{ loop.index }}: {{ q.question }}</div>
+            <ul class="options-list">
+                {% for opt in q.options %}
+                <li class="option-item">
+                    <label>
+                        <input type="radio" name="q_{{ q.id }}" value="{{ opt }}" required>
+                        {{ opt }}
+                    </label>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="submit-btn">Submit Math Test & Continue to POPI</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('mathForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        let mathAnswers = {};
+        formData.forEach((value, key) => { mathAnswers[key] = value; });
+        sessionStorage.setItem('mathAnswers', JSON.stringify(mathAnswers));
+       
+        window.location.href = "{{ url_for('popi_test') }}";
+    });
+</script>
+
+</body>
+</html>

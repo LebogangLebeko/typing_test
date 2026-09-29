@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome - Candidate Assessment</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; max-width: 800px; margin: auto; padding: 20px; }
+        .logo { display: block; margin: 0 auto 25px auto; max-width: 240px; }
+        .card { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h1 { text-align: center; color: #333; margin-top: 0; }
+        h3 { color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 5px; }
+        .rules-list { line-height: 1.6; color: #444; }
+        .alert { background: #ffeeba; color: #856404; padding: 15px; border-radius: 5px; font-weight: bold; text-align: center; margin: 20px 0; border-left: 5px solid #d39e00;}
+        .example-box { background: #f8f9fa; padding: 12px; border-left: 4px solid #28a745; margin: 10px 0; font-family: monospace; font-size: 14px; }
+        .tc-box { background: #eef2ff; padding: 20px; border-radius: 5px; border: 1px solid #c7d2fe; text-align: center; margin-top: 25px; }
+        button { background: #0056b3; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 18px; font-weight: bold; transition: 0.3s; }
+        button:disabled { background: #cccccc; cursor: not-allowed; }
+        button:not(:disabled):hover { background: #004494; }
+    </style>
+</head>
+<body>
+
+    <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Company Logo">
+
+    <div class="card">
+        <h1>Candidate Skills Assessment</h1>
+        
+        <h3>About This Assessment</h3>
+        <p class="rules-list">
+            This assessment evaluates your <strong>data capturing accuracy, attention to detail, and typing performance</strong> under timed conditions.
+        </p>
+
+        <h3>Part 1: Data Entry Transcription Rules</h3>
+        <ul class="rules-list">
+            <li><strong>Formatting:</strong> Capturing exact names, numbers, and monetary balances with accurate spacing is required.</li>
+            <li><strong>Sample Required Output:</strong>
+                <div class="example-box">
+                    First Name: John<br>
+                    ID Number: 8001015009087<br>
+                    Account Number: 123456789<br>
+                    Outstanding Balance: R5000.00<br>
+                    Handover Balance: R1250.00
+                </div>
+            </li>
+        </ul>
+
+        <div class="alert">
+            ⏰ NOTICE: Once you begin, the audio will play. You must capture data promptly before the submission timer finishes.
+        </div>
+
+        <div class="tc-box">
+            <label style="font-size: 15px; cursor: pointer;">
+                <input type="checkbox" id="terms-checkbox" onchange="toggleProceed()" style="transform: scale(1.3); margin-right: 8px;"> 
+                <strong>I have read and agree to the assessment rules.</strong>
+            </label>
+            <br><br>
+            <button id="proceed-btn" disabled onclick="startAssessment()">Accept & Proceed to Test</button>
+        </div>
+    </div>
+
+<script>
+    function toggleProceed() {
+        document.getElementById('proceed-btn').disabled = !document.getElementById('terms-checkbox').checked;
+    }
+    function startAssessment() {
+        window.location.href = "{{ url_for('audio_test') }}";
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Part 1: Audio Transcription</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; max-width: 800px; margin: auto; padding: 20px; }
+        .logo { display: block; margin: 0 auto 20px auto; max-width: 200px; }
+        .card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
+        label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        input[type="text"], select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
+        button { background: #0056b3; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+        button:disabled { background: #a0a0a0; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Company Logo">
+   
+    <div class="card">
+        <h2 style="margin-top: 0; color: #333;">Part 1: Data Entry Transcription</h2>
+       
+        <div class="form-group">
+            <label for="candidate-name">Candidate Name <span style="color:red;">*</span></label>
+            <input type="text" id="candidate-name" placeholder="Enter your full name">
+        </div>
+       
+        <div class="form-group">
+            <label for="book-select">Select Book (Portfolio) <span style="color:red;">*</span></label>
+            <select id="book-select">
+                <option value="" disabled selected>-- Select an option --</option>
+                <option value="Standard Bank">Standard Bank</option>
+                <option value="MFC">MFC</option>
+                <option value="ABSA">ABSA</option>
+                <option value="King Price">King Price</option>
+            </select>
+        </div>
+
+        <audio id="audio-player" src="{{ url_for('static', filename='assessment_audio.m4a') }}" preload="auto" style="display: none;"></audio>
+       
+        <button id="start-btn" onclick="startTest()">Start Test & Play Audio</button>
+        <p id="timer-display" style="text-align: center; font-weight: bold; color: #0056b3; margin-top: 15px;"></p>
+    </div>
+
+    <div class="card">
+        <div class="form-grid">
+            <div class="form-group"><label>First Name</label><input type="text" id="f-name" class="transcribe-field" disabled></div>
+            <div class="form-group"><label>Surname</label><input type="text" id="f-surname" class="transcribe-field" disabled></div>
+            <div class="form-group"><label>ID Number</label><input type="text" id="f-id" class="transcribe-field" disabled></div>
+            <div class="form-group"><label>Cellphone</label><input type="text" id="f-cell" class="transcribe-field" disabled></div>
+            <div class="form-group"><label>Address</label><input type="text" id="f-address" class="transcribe-field" disabled></div>
+            <div class="form-group"><label>Account Number</label><input type="text" id="f-acc" class="transcribe-field" disabled></div>
+            <div class="form-group"><label>Outstanding Balance</label><input type="text" id="f-out-bal" class="transcribe-field" disabled></div>
+            <div class="form-group"><label>Handover Balance</label><input type="text" id="f-hand-bal" class="transcribe-field" disabled></div>
+        </div>
+    </div>
+
+<script>
+    const targets = {
+        "f-name": { label: "First Name", target: "John" },
+        "f-surname": { label: "Surname", target: "Doe" },
+        "f-id": { label: "ID Number", target: "8001015009087" },
+        "f-cell": { label: "Cellphone", target: "0825551234" },
+        "f-address": { label: "Address", target: "123 Nelson Mandela Drive" },
+        "f-acc": { label: "Account Number", target: "123456789" },
+        "f-out-bal": { label: "Outstanding Balance", target: "R5000.00" },
+        "f-hand-bal": { label: "Handover Balance", target: "R1250.00" }
+    };
+
+    const audioPlayer = document.getElementById('audio-player');
+
+    function startTest() {
+        const nameInput = document.getElementById('candidate-name');
+        const candidateName = nameInput.value.trim();
+        const bookSelect = document.getElementById('book-select');
+        const selectedBook = bookSelect.value;
+
+        if (!candidateName) {
+            alert("Error: Please enter your Full Name before starting the test.");
+            nameInput.focus();
+            return;
+        }
+
+        if (!selectedBook) {
+            alert("Error: Please select a book before starting the test.");
+            bookSelect.focus();
+            return;
+        }
+
+        nameInput.disabled = true;
+        bookSelect.disabled = true;
+        document.getElementById('start-btn').disabled = true;
+
+        document.querySelectorAll('.transcribe-field').forEach(field => {
+            field.disabled = false;
+            field.value = '';
+        });
+
+        audioPlayer.play().catch(err => {
+            alert("Error playing audio. Please ensure static/assessment_audio.m4a exists in the server folder.");
+            nameInput.disabled = false;
+            bookSelect.disabled = false;
+            document.getElementById('start-btn').disabled = false;
+            return;
+        });
+
+        const timerInterval = setInterval(() => {
+            if (audioPlayer.duration) {
+                const currentSec = Math.floor(audioPlayer.currentTime);
+                const totalSec = Math.floor(audioPlayer.duration);
+                document.getElementById('timer-display').innerText = `🔊 Audio Playing: ${currentSec}s / ${totalSec}s | Capture data below...`;
+            } else {
+                document.getElementById('timer-display').innerText = "🔊 Audio Playing... Capturing data...";
+            }
+        }, 500);
+
+        audioPlayer.onended = () => {
+            clearInterval(timerInterval);
+            document.querySelectorAll('.transcribe-field').forEach(field => field.disabled = true);
+           
+            let totalTypedChars = 0;
+            let correctWords = 0;
+            let totalWords = 0;
+            let part1_data = [];
+
+            for (const [id, data] of Object.entries(targets)) {
+                const el = document.getElementById(id);
+                const typedText = el.value.trim();
+                totalTypedChars += typedText.length;
+               
+                part1_data.push({ label: data.label, typed: typedText, target: data.target });
+               
+                const typedArr = typedText.split(/\s+/).filter(Boolean);
+                const targetArr = data.target.split(/\s+/).filter(Boolean);
+                totalWords += targetArr.length;
+               
+                for (let i = 0; i < typedArr.length; i++) {
+                    if (i < targetArr.length && typedArr[i] === targetArr[i]) {
+                        correctWords++;
+                    }
+                }
+            }
+
+            const playDuration = audioPlayer.duration || 1;
+            let cps = (totalTypedChars / playDuration).toFixed(2);
+            let accuracy = totalWords > 0 ? ((correctWords / totalWords) * 100).toFixed(2) : "0.00";
+            if (parseFloat(accuracy) > 100) accuracy = "100.00";
+           
+            sessionStorage.setItem('candidateName', candidateName);
+            sessionStorage.setItem('selectedBook', selectedBook);
+            sessionStorage.setItem('audioCps', cps);
+            sessionStorage.setItem('audioAccuracy', accuracy);
+            sessionStorage.setItem('part1Data', JSON.stringify(part1_data));
+           
+            document.getElementById('timer-display').style.color = '#28a745';
+            document.getElementById('timer-display').innerText = "✓ Part 1 Complete! Redirecting to Math Assessment...";
+           
+            setTimeout(() => {
+                window.location.href = `/math_test?book=${encodeURIComponent(selectedBook)}`;
+            }, 1800);
+        };
+    }
+</script>
+</body>
+</html>

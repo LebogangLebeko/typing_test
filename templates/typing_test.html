@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Final Part: 60-Second Copy Typing Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; max-width: 800px; margin: auto; padding: 20px; }
+        .logo { display: block; margin: 0 auto 20px auto; max-width: 180px; }
+        .card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .instructions { background: #eef6ff; border-left: 5px solid #0056b3; padding: 15px; margin-bottom: 20px; border-radius: 4px; line-height: 1.5; color: #333; }
+        .target-box { background: #e9ecef; border: 2px solid #ced4da; padding: 15px; border-radius: 6px; line-height: 1.8; font-size: 16px; color: #495057; font-family: 'Courier New', Courier, monospace; margin-bottom: 15px; min-height: 100px; word-wrap: break-word; }
+        textarea { width: 100%; height: 120px; padding: 12px; border: 2px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        textarea:disabled { background-color: #f8f9fa; cursor: not-allowed; }
+        .timer-badge { text-align: center; font-size: 20px; font-weight: bold; color: #d9534f; margin: 15px 0; }
+        .correct-word { color: #28a745; font-weight: bold; }
+        .active-word { color: #d4a017; font-weight: bold; text-decoration: underline; }
+        .error-word { color: #dc3545; font-weight: bold; text-decoration: underline; background: #f8d7da; border-radius: 3px; }
+        .untyped-word { color: #6c757d; }
+        button { background: #0056b3; color: white; border: none; padding: 14px 28px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 17px; font-weight: bold; }
+        button:disabled { background: #a0a0a0; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Company Logo">
+   
+    <div class="card">
+        <h2 style="margin-top: 0; color: #333;">Final Part: 60-Second Copy Typing Test</h2>
+       
+        <div class="instructions">
+            <strong>Instructions:</strong>
+            <ol style="margin-top: 5px; margin-bottom: 0; padding-left: 20px;">
+                <li>Click <strong>"Start 60-Second Test"</strong> to unlock the typing box.</li>
+                <li>You have exactly <strong>60 seconds</strong> to type out the target paragraph below.</li>
+                <li>Text highlights in real time (Green = Correct, Gold = Active, Red = Error).</li>
+            </ol>
+        </div>
+
+        <button id="start-btn" onclick="start60sTest()">Start 60-Second Test</button>
+        <div class="timer-badge" id="timer-display">Time Remaining: 60s</div>
+
+        <label style="font-weight: bold; margin-bottom: 5px; display: block;">Target Paragraph:</label>
+        <div class="target-box" id="target-display"></div>
+
+        <label style="font-weight: bold; margin-bottom: 5px; display: block;">Your Input Area:</label>
+        <textarea id="typed-input" placeholder="Click 'Start 60-Second Test' to begin typing..." disabled oninput="updateLiveAccuracy()"></textarea>
+
+        <p id="status-msg" style="text-align: center; font-weight: bold; margin-top: 15px; color: #0056b3;"></p>
+    </div>
+
+<script>
+    const targetText = "Imbuyiso Consulting & Collections provides professional debt collection and legal administration services. Accuracy and attention to detail are critical when processing financial records. Candidate evaluation measures transcription accuracy and speed under timed conditions.";
+   
+    let timeLeft = 60;
+    let timerInterval = null;
+    let testActive = false;
+
+    function renderInitialTarget() {
+        const words = targetText.split(/\s+/);
+        document.getElementById('target-display').innerHTML = words.map(w => `<span class="untyped-word">${w}</span>`).join(' ');
+    }
+    renderInitialTarget();
+
+    function start60sTest() {
+        const inputArea = document.getElementById('typed-input');
+        const startBtn = document.getElementById('start-btn');
+       
+        startBtn.disabled = true;
+        inputArea.disabled = false;
+        inputArea.value = '';
+        inputArea.focus();
+        testActive = true;
+
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer-display').innerText = `Time Remaining: ${timeLeft}s`;
+
+            if (timeLeft <= 0) {
+                finishTest();
+            }
+        }, 1000);
+    }
+
+    function updateLiveAccuracy() {
+        if (!testActive) return;
+
+        const typedText = document.getElementById('typed-input').value;
+        const targetWords = targetText.split(/\s+/);
+        const typedWords = typedText.trim().split(/\s+/);
+        const isTypingSpace = typedText.endsWith(' ');
+
+        let htmlOutput = '';
+
+        for (let i = 0; i < targetWords.length; i++) {
+            if (i < typedWords.length - 1 || (i === typedWords.length - 1 && isTypingSpace)) {
+                if (typedWords[i] === targetWords[i]) {
+                    htmlOutput += `<span class="correct-word">${targetWords[i]}</span> `;
+                } else {
+                    htmlOutput += `<span class="error-word">${targetWords[i]}</span> `;
+                }
+            } else if (i === typedWords.length - 1 && !isTypingSpace && typedText.length > 0) {
+                const currentTyped = typedWords[i];
+                if (targetWords[i].startsWith(currentTyped)) {
+                    htmlOutput += `<span class="active-word">${targetWords[i]}</span> `;
+                } else {
+                    htmlOutput += `<span class="error-word">${targetWords[i]}</span> `;
+                }
+            } else {
+                htmlOutput += `<span class="untyped-word">${targetWords[i]}</span> `;
+            }
+        }
+
+        document.getElementById('target-display').innerHTML = htmlOutput;
+    }
+
+    function finishTest() {
+        clearInterval(timerInterval);
+        testActive = false;
+       
+        const inputArea = document.getElementById('typed-input');
+        inputArea.disabled = true;
+        document.getElementById('timer-display').innerText = "⏱ Time's Up! Test Completed.";
+
+        const payload = {
+            username: sessionStorage.getItem('candidateName') || 'Candidate',
+            selected_book: sessionStorage.getItem('selectedBook') || 'Standard Bank',
+            audio_cps: sessionStorage.getItem('audioCps') || 0,
+            audio_accuracy: sessionStorage.getItem('audioAccuracy') || 0,
+            part1_data: JSON.parse(sessionStorage.getItem('part1Data') || '[]'),
+            math_answers: JSON.parse(sessionStorage.getItem('mathAnswers') || '{}'),
+            popi_answers: JSON.parse(sessionStorage.getItem('popiAnswers') || '[]'),
+            p2_typed: inputArea.value.trim(),
+            p2_target: targetText
+        };
+
+        document.getElementById('status-msg').innerText = "Evaluating responses and generating Final Assessment PDF...";
+
+        fetch('/save_score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('status-msg').style.color = '#28a745';
+                document.getElementById('status-msg').innerText = `Assessment Complete! Final Score: ${data.total_score}% (${data.final_grade}). PDF generated in uploads folder.`;
+                sessionStorage.clear();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('status-msg').style.color = '#dc3545';
+            document.getElementById('status-msg').innerText = "Error saving assessment results.";
+        });
+    }
+</script>
+</body>
+</html>
