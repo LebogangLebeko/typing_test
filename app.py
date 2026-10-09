@@ -196,7 +196,8 @@ def init_db():
         ("typing_gross_wpm", "REAL"), ("typing_net_wpm", "REAL"), ("typing_accuracy", "REAL"), ("part2_grade", "TEXT"),
         ("maths_score", "REAL"), ("popi_score", "REAL"),
         ("total_score", "REAL"), ("final_grade", "TEXT"),
-        ("part1_data", "TEXT"), ("p2_typed", "TEXT"), ("p2_target", "TEXT")
+        ("part1_data", "TEXT"), ("p2_typed", "TEXT"), ("p2_target", "TEXT"),
+        ("math_data", "TEXT"), ("popi_data", "TEXT")
     ]
     for col_name, col_type in columns:
         try:
@@ -281,11 +282,13 @@ def generate_combined_pdf(data, filename):
         c.line(50, height - 102, 560, height - 102)
         c.setFillColor(colors.black)
 
-    # PAGE 1: DETAILED TRANSCRIPT ANALYSIS
+    # ==========================================
+    # PAGE 1: AUDIO & TYPING TRANSCRIPT ANALYSIS
+    # ==========================================
     draw_letterhead()
    
     c.setFont("Helvetica-Bold", 13)
-    c.drawString(50, height - 125, "CANDIDATE SKILLS ASSESSMENT REPORT (PAGE 1 OF 2)")
+    c.drawString(50, height - 125, "CANDIDATE SKILLS ASSESSMENT REPORT (PAGE 1 OF 3)")
    
     c.setStrokeColor(colors.HexColor("#CCCCCC"))
     c.setLineWidth(1)
@@ -343,16 +346,111 @@ def generate_combined_pdf(data, filename):
 
     c.setFont("Helvetica-Oblique", 8)
     c.setFillColor(colors.HexColor("#666666"))
-    c.drawString(50, 30, "* Continued on Page 2 for Final Score Calculations and Pass/Fail Outcome.")
+    c.drawString(50, 30, "* Continued on Page 2 for Mathematics and POPI Act breakdowns.")
 
+    # ==========================================
+    # PAGE 2: MATH & POPI ACT BREAKDOWN
+    # ==========================================
     c.showPage()
+    draw_letterhead()
 
-    # PAGE 2: SCORE BREAKDOWN
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(50, height - 125, "CANDIDATE SKILLS ASSESSMENT REPORT (PAGE 2 OF 3)")
+
+    c.setStrokeColor(colors.HexColor("#CCCCCC"))
+    c.setLineWidth(1)
+    c.rect(50, height - 165, 510, 30, fill=0)
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(60, height - 150, f"Candidate: {data.get('username', 'Unknown')} | Portfolio: {data.get('selected_book', 'General')}")
+    c.setFont("Helvetica", 9)
+    c.drawString(60, height - 160, "Assessment Component: Math & POPI Act Answer Breakdown")
+
+    y_pos = height - 195
+
+    # -------------------
+    # MATH BREAKDOWN
+    # -------------------
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(50, y_pos, f"Part 3: Portfolio Mathematics ({data.get('selected_book', 'Standard Bank')}) Details")
+    y_pos -= 12
+
+    selected_book = data.get('selected_book', 'Standard Bank')
+    book_questions = MATH_QUESTIONS.get(selected_book, MATH_QUESTIONS['Standard Bank'])
+    math_user_answers = data.get('math_answers', {})
+
+    math_html = ""
+    for q in book_questions:
+        q_key = f"q_{q['id']}"
+        user_ans = math_user_answers.get(q_key, "")
+        expected_ans = q['answer']
+        
+        user_ans_esc = html.escape(str(user_ans)) if user_ans else "<i>[Left Blank]</i>"
+        expected_ans_esc = html.escape(str(expected_ans))
+        
+        if str(user_ans).strip().lower() == str(expected_ans).strip().lower():
+            input_fmt = f'<font color="green">{user_ans_esc}</font>'
+        else:
+            input_fmt = f'<font color="red"><u>{user_ans_esc}</u></font>'
+            
+        math_html += f"<b>Q: {html.escape(q['question'])}</b><br/>"
+        math_html += f"Expected: <font color='#888888'>{expected_ans_esc}</font> | Input: {input_fmt}<br/><br/>"
+
+    if math_html:
+        math_p = Paragraph(math_html, custom_style)
+        w, h = math_p.wrap(500, 800)
+        math_p.drawOn(c, 50, y_pos - h)
+        y_pos -= (h + 20)
+
+    # -------------------
+    # POPI BREAKDOWN
+    # -------------------
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(50, y_pos, "Part 4: POPI Act Compliance Details")
+    y_pos -= 12
+
+    popi_user_answers = data.get('popi_answers', [])
+    popi_html = ""
+    for item in popi_user_answers:
+        q_id = int(item.get('id', 0))
+        user_text = item.get('answer', '')
+        q_config = next((q for q in POPI_QUESTION_POOL if q['id'] == q_id), None)
+        
+        if q_config:
+            expected_kws = ", ".join(q_config['keywords'])
+            user_ans_esc = html.escape(str(user_text)) if user_text else "<i>[Left Blank]</i>"
+            
+            # Highlight answer input based on keyword matches
+            matched = [kw for kw in q_config['keywords'] if kw.lower() in str(user_text).lower()]
+            if len(matched) >= 3:
+                color = "green" # Full marks
+            elif len(matched) > 0:
+                color = "#D4A017" # Orange for partial marks
+            else:
+                color = "red" # Failed match
+                
+            popi_html += f"<b>Q: {html.escape(q_config['question'])}</b><br/>"
+            popi_html += f"Expected Keywords: <font color='#888888'>{html.escape(expected_kws)}</font><br/>"
+            popi_html += f"Input: <font color='{color}'>{user_ans_esc}</font><br/><br/>"
+
+    if popi_html:
+        popi_p = Paragraph(popi_html, custom_style)
+        w, h = popi_p.wrap(500, 800)
+        popi_p.drawOn(c, 50, y_pos - h)
+        y_pos -= (h + 20)
+
+    c.setFont("Helvetica-Oblique", 8)
+    c.setFillColor(colors.HexColor("#666666"))
+    c.drawString(50, 30, "* Continued on Page 3 for Final Score Calculations and Pass/Fail Outcome.")
+
+    # ==========================================
+    # PAGE 3: SCORE BREAKDOWN (Final Outcome)
+    # ==========================================
+    c.showPage()
     draw_letterhead()
 
     c.setFont("Helvetica-Bold", 13)
     c.setFillColor(colors.black)
-    c.drawString(50, height - 125, "FINAL ASSESSMENT OUTCOME REPORT (PAGE 2 OF 2)")
+    c.drawString(50, height - 125, "FINAL ASSESSMENT OUTCOME REPORT (PAGE 3 OF 3)")
 
     c.setStrokeColor(colors.HexColor("#CCCCCC"))
     c.setLineWidth(1)
@@ -372,7 +470,8 @@ def generate_combined_pdf(data, filename):
     c.setFont("Helvetica-Bold", 10)
     c.drawString(65, y_p2 - 18, "PART 1: AUDIO TRANSCRIPTION")
     c.setFont("Helvetica", 9)
-    c.drawString(65, y_p2 - 38, f"Speed: {data.get('audio_cps', 0)} CPS | Accuracy: {data.get('audio_accuracy', 0)}%")
+    c.drawString(65, y_p2 - 38, f"Calculated Score: {data.get('audio_accuracy', 0)}%")
+    
     p1_grade = data.get('part1_grade', 'FAIL')
     c.setFont("Helvetica-Bold", 9)
     c.drawString(420, y_p2 - 38, "Status: ")
@@ -406,9 +505,9 @@ def generate_combined_pdf(data, filename):
     c.rect(50, y_p2 - 55, 510, 55, fill=1, stroke=1)
     c.setFillColor(colors.black)
     c.setFont("Helvetica-Bold", 10)
-    c.drawString(65, y_p2 - 18, "PART 3: POPI ACT COMPLIANCE (KEYWORD MATCHING)")
+    c.drawString(65, y_p2 - 18, "PART 3: POPI ACT COMPLIANCE")
     c.setFont("Helvetica", 9)
-    c.drawString(65, y_p2 - 38, f"Automated Score: {popi_score}%")
+    c.drawString(65, y_p2 - 38, f"Calculated Score: {popi_score}%")
     popi_grade = get_grade(float(popi_score))
     c.setFont("Helvetica-Bold", 9)
     c.drawString(420, y_p2 - 38, "Status: ")
@@ -425,7 +524,8 @@ def generate_combined_pdf(data, filename):
     c.setFont("Helvetica-Bold", 10)
     c.drawString(65, y_p2 - 18, "PART 4: 60-SECOND COPY TYPING")
     c.setFont("Helvetica", 9)
-    c.drawString(65, y_p2 - 38, f"Gross: {data.get('typing_gross_wpm', 0)} WPM | Net: {data.get('typing_net_wpm', 0)} WPM | Acc: {data.get('typing_accuracy', 0)}%")
+    c.drawString(65, y_p2 - 38, f"Calculated Score: {data.get('typing_accuracy', 0)}%")
+    
     p2_grade = data.get('part2_grade', 'FAIL')
     c.setFont("Helvetica-Bold", 9)
     c.drawString(420, y_p2 - 38, "Status: ")
@@ -528,11 +628,12 @@ def save_score():
     conn = sqlite3.connect('typing.db')
     c = conn.cursor()
     c.execute('''INSERT INTO results
-                 (username, selected_book, audio_cps, audio_accuracy, part1_grade, typing_gross_wpm, typing_net_wpm, typing_accuracy, part2_grade, maths_score, popi_score, total_score, final_grade, part1_data, p2_typed, p2_target)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                 (username, selected_book, audio_cps, audio_accuracy, part1_grade, typing_gross_wpm, typing_net_wpm, typing_accuracy, part2_grade, maths_score, popi_score, total_score, final_grade, part1_data, p2_typed, p2_target, math_data, popi_data)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
               (d.get('username'), selected_book, d.get('audio_cps'), d.get('audio_accuracy'), part1_grade,
                p2_gross, p2_net, p2_acc, part2_grade, maths_score, popi_score, total_score, final_grade,
-               json.dumps(d.get('part1_data', [])), d.get('p2_typed'), d.get('p2_target')))
+               json.dumps(d.get('part1_data', [])), d.get('p2_typed'), d.get('p2_target'), 
+               json.dumps(math_user_answers), json.dumps(popi_user_answers)))
     conn.commit()
     conn.close()
 
