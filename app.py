@@ -25,13 +25,13 @@ MATH_QUESTIONS = {
         },
         {
             "id": 2,
-            "question": "Using the discounted settlement amount (R33,846.46), calculate the installment value if he repays over 3 months by paying fortnightly (6 installments).",
+            "question": "Using the discounted settlement amount, calculate the installment value if he repays over 3 months by paying fortnightly (6 installments).",
             "options": ["R5,641.08", "R11,282.15", "R5,859.67", "R8,461.62"],
             "answer": "R5,641.08"
         },
         {
             "id": 3,
-            "question": "What is the commission earned by the company on each fortnightly payment of R5,641.08 if we charge 15% commission (VAT included)?",
+            "question": "What is the commission earned by the company on each fortnightly payment if we charge 15% commission (VAT included)?",
             "options": ["R846.16", "R1,692.32", "R735.79", "R1,025.00"],
             "answer": "R846.16"
         }
@@ -122,19 +122,21 @@ POPI_QUESTION_POOL = [
         "id": 4,
         "title": "Notification Requirements",
         "question": "What information must you disclose to a debtor when collecting personal information during communication?",
-        "keywords": ["aware", "collection", "disclose", "who we are", "imbuyiso", "client", "bank", "purpose"]
+        "keywords": ["aware", "collection", "disclose", "who we are", "imbuyiso", "client", "bank", "purpose", "arrears",
+                     "calls are recorded"]
     },
     {
         "id": 5,
         "title": "Security Safeguards",
         "question": "What are your responsibilities regarding security safeguards and access to personal information?",
-        "keywords": ["integrity", "confidentiality", "secure", "debtor alone", "no other person", "unauthorized"]
+        "keywords": ["integrity", "confidentiality", "secure", "debtor alone", "no other person", "unauthorized", "encrypt", "data protection"]
     },
     {
         "id": 6,
         "title": "Actions Constituting a Breach",
         "question": "Name 4 actions during calls or correspondence that would constitute a direct breach of the POPI Act.",
-        "keywords": ["sms", "email", "unconfirmed", "third party", "recording", "script", "template", "identity", "disclose", "incorrect"]
+        "keywords": ["sms", "email", "unconfirmed", "third party", "recording", "script", "template", "identity", "disclose", "incorrect", "id number", "not confirming",
+                     "account information"]
     },
     {
         "id": 7,
