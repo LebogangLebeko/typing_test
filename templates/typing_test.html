@@ -144,7 +144,7 @@
         .then(data => {
             if (data.success) {
                 document.getElementById('status-msg').style.color = '#28a745';
-                document.getElementById('status-msg').innerText = `Assessment Complete! Final Score: ${data.total_score}% (${data.final_grade}). PDF generated in uploads folder.`;
+                document.getElementById('status-msg').innerText = `Assessment Complete! PDF generated.`;
                 sessionStorage.clear();
             }
         })
